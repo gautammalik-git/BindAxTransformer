@@ -45,7 +45,7 @@ The training loop implements the masked language model training:
 ### f. Saving the Model
 After training, the model’s parameters are saved to a file for future use in predicting novel protein-ligand interactions.
 
-## 3. Tips to Reproduce the Code
+## 3. Reproducing the Code
 
 ### a. Environment Setup
 To run the code, you will need:
@@ -57,3 +57,9 @@ To run the code, you will need:
 You can install the required dependencies using:
 ```bash
 pip install torch transformers scikit-learn numpy
+```
+## 4. Usage
+```bash
+python bindax_tran.py
+```
+Ensure that you update the directory name containing the training complexes in the Python script.
