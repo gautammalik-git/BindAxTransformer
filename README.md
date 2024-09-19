@@ -58,19 +58,18 @@ You can install the required dependencies using:
 ```bash
 pip install torch transformers scikit-learn numpy
 ```
-<br>
+
 If in case the torch module is still not installed try using:
 
 ```bash
 pip3 install torch torchvision 
 ```
+
 If you are using conda you can also try:
 
 ```bash
 conda install pytorch torchvision -c pytorch
 ```
-
-<br>
 
 ## 4. Usage
 ```bash
