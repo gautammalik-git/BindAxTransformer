@@ -60,6 +60,6 @@ pip install torch transformers scikit-learn numpy
 ```
 ## 4. Usage
 ```bash
-python bindax_tran.py
+python bindax_trans.py
 ```
 Ensure that you update the directory name containing the training complexes in the Python script.
