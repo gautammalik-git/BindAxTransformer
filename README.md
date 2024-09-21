@@ -136,31 +136,31 @@ For a ligand atom with atom type "C" (carbon), 3D coordinates $$\( (1.24, -2.55,
 
 Let’s break this down:
 
-1. **Atom Type Embedding** $$\( \mathbf{v}_\text{atom\_type} \)$$:  
+1. **Atom Type Embedding** ($${v}_{atomtype}$$) :  
    This encodes the type of atom. For a carbon atom, this embedding might be:
    
-$$v_atom_type = [0.1, 0.2, 0.05, ..., 0.3] in ℝ^d$$
+$${v}_{atomtype} = [0.1, 0.2, 0.05, ..., 0.3] \in \mathbb{R}^{d}$$
 
 2. **3D Coordinates Embedding** $$\( \mathbf{v}_\text{coordinates} \)$$:  
    The coordinates $$\( (1.24, -2.55, 0.67) \)$$ are encoded into a vector:
    
-   ```math
-   \mathbf{v}_\text{coordinates} = \text{MLP}([1.24, -2.55, 0.67]) = [0.05, 0.12, 0.03, \dots, 0.08] \in \mathbb{R}^{d}
-   ```
+ 
+ $${v}_{text-coordinates} = {MLP}([1.24, -2.55, 0.67]) = [0.05, 0.12, 0.03, ..., 0.08] \in \mathbb{R}^{d}$$
+   
 
-3. **Charge Embedding** \( \mathbf{v}_\text{charge} \):  
+3. **Charge Embedding** $$\( \mathbf{v}_\text{charge} \)$$:  
    The charge of the atom (here 0) is also embedded:
 
-   ```math
-   \mathbf{v}_\text{charge} = [0.0, 0.0, 0.0, \dots, 0.0] \in \mathbb{R}^{d}
-   ```
+  
+   $${v}_{text-charge} = [0.0, 0.0, 0.0, ...., 0.0] \in \mathbb{R}^{d}$$
+   
 
-5. **Positional Encoding** $$\( \mathbf{v}_\text{positional\_encoding} \)$$:  
+5. **Positional Encoding** ($${v}_{text-positional-encoding}$$):  
    The positional encoding captures the position of this atom in the sequence. For the $$\( i \)-th$$ atom, the positional encoding might be:
    
-   $$
-   \mathbf{v}_\text{positional\_encoding} = [0.15, 0.03, 0.07, \dots, 0.01] \in \mathbb{R}^{d}
-   $$
+   
+   $${v}_{text-positional-encoding} = [0.15, 0.03, 0.07, ...., 0.01] \in \mathbb{R}^{d}$$
+   
 
 ### Final Embedding for Single Token $$\( T_i \)$$
 
