@@ -22,14 +22,17 @@ It is for these reasons that I have developed a self-supervised transformer-base
 
 ![My image](./images/pre-trained.png)
 
-### Transformers for Protein-Ligand Interactions
-Transformers, traditionally used in NLP, excel at learning context. For protein-ligand interactions, transformers can be trained using masked token prediction to learn relationships between atoms in the ligand and residues in the binding site. This approach is useful because:
 
-- **Self-supervised learning** doesn't require explicit labels, making it ideal for large, unlabeled datasets.
-- **Masked Language Modeling (MLM)** allows the transformer to predict masked atoms or residues based on the surrounding context, making the model sensitive to local interactions.
+### Self-Supervised Learning & Masked Language Model (MLM)
 
-### c. Objective
-The aim is to build a transformer model that masks a portion of the input atoms (for ligands) and residues (for proteins) and predicts them based on the rest of the sequence. This method helps the model understand spatial and chemical relationships in protein-ligand complexes.
+Self-supervised learning (SSL) is ideal when dealing with vast amounts of unlabeled data, as it allows models to generate their own supervision signals from the data itself. In the study of protein-ligand interactions, we have abundant structural data from sources like the Protein Data Bank (PDB), but experimentally derived labels, such as binding affinities, are often limited.
+
+Masked Language Modeling (MLM), a core technique in self-supervised learning, trains a model to predict masked parts of the input based on the surrounding context. In the original NLP setting, MLM teaches transformers like BERT to understand the relationships between words by masking certain words in a sentence.
+
+In the context of protein-ligand interactions, I apply the same principle by masking atoms of the ligand or residues in the binding site. The model learns to predict the masked atoms or residues based on the surrounding structural and chemical context, thereby learning spatial and chemical dependencies critical to protein-ligand interactions.
+
+This method is highly effective for capturing the intricate details of how ligands interact with proteins. Once pre-trained in this way, the model can then be fine-tuned for specific downstream tasks, significantly improving its predictive performance.
+
 
 ## 2. Code Explanation
 
