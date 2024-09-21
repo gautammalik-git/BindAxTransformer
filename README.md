@@ -46,7 +46,7 @@ In the context of protein-ligand interactions, I apply the same principle by mas
 This method is highly effective for capturing the intricate details of how ligands interact with proteins. Once pre-trained in this way, the model can then be fine-tuned for specific downstream tasks, significantly improving its predictive performance.
 
 
-## 2. Code Explanation
+## 2. Implementation and Mathametical Foundation of BindAxTransformer
 
 ### a. Tokenizing Ligand and Binding Site
 The code begins by parsing Protein Data Bank (PDB) files to extract ligand and protein binding site coordinates. These coordinates are then tokenized into atom types and residue types:
@@ -75,9 +75,14 @@ The training loop implements the masked language model training:
 ### f. Saving the Model
 After training, the model’s parameters are saved to a file for future use in predicting novel protein-ligand interactions.
 
-## 3. Reproducing the Code
+## 3. Detailed Code Explaination for BindAxTransformer
 
-### a. Environment Setup
+I have created a separate repository that explains the code behind **BindAxTransformer** line by line. You can find that repository [here](https://github.com/gautammalik-git/Understanding-BindAxTransformer.git).
+
+
+## 4. Usage
+
+### Prerequisites
 To run the code, you will need:
 - Python 3.7+
 - PyTorch
@@ -100,8 +105,7 @@ If you are using conda you can also try:
 ```bash
 conda install pytorch torchvision -c pytorch
 ```
-
-## 4. Usage
+### Running the code
 ```bash
 python bindax_trans.py
 ```
