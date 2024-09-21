@@ -1,6 +1,6 @@
-# Protein-Ligand Interaction Self-Supervised Transformer Model
+# Self-Supervised Learning of Protein-Ligand Interactions using BERT  
 
-This repository contains the implementation of a self-supervised transformer model designed to understand protein-ligand interactions. The goal is to predict how binding site residues influence ligand behavior using masked language modeling (MLM) tasks for both the ligand and protein binding site tokens.
+This repository contains the implementation of a self-supervised Bidirectional Encoder Representations from Transformers (BERT) model designed to understand protein-ligand interactions. The goal is to predict how binding site residues influence ligand behavior using masked language modeling (MLM) tasks for both the ligand and protein binding site tokens.
 
 ## 1. Theory
 
