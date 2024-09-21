@@ -75,7 +75,7 @@ The training loop implements the masked language model training:
 ### f. Saving the Model
 After training, the model’s parameters are saved to a file for future use in predicting novel protein-ligand interactions.
 
-## 3. Detailed Code Explaination for BindAxTransformer
+## 3. Detailed Code Explanation for BindAxTransformer
 
 I have created a separate repository that explains the code behind **BindAxTransformer** line by line. You can find that repository [here](https://github.com/gautammalik-git/Understanding-BindAxTransformer.git).
 
