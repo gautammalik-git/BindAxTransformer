@@ -20,6 +20,8 @@ Transformer models offer significant advantages in the study of Protein-Ligand I
 
 It is for these reasons that I have developed a self-supervised transformer-based model utilizing the 65,000 protein-ligand complexes from the PDB, aimed at advancing our understanding of protein-ligand interactions and improving predictive accuracy in this area of study.
 
+![My image](./images/pre-trained.png)
+
 ### b. Transformers for Protein-Ligand Interactions
 Transformers, traditionally used in NLP, excel at learning context. For protein-ligand interactions, transformers can be trained using masked token prediction to learn relationships between atoms in the ligand and residues in the binding site. This approach is useful because:
 
