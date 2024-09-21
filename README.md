@@ -4,7 +4,7 @@ This repository contains the implementation of a self-supervised Bidirectional E
 
 ## 1. Theory
 
-### a. How do Transformer models benefit the study of Protein-Ligand Interactions?
+### How do Transformer models benefit the study of Protein-Ligand Interactions?
 In biological systems, proteins interact with ligands in binding sites, influencing processes like enzyme catalysis, signal transduction, and drug binding. Understanding how specific residues in the binding site affect ligand binding can significantly aid in drug discovery and design. 
 
 Transformer models offer significant advantages in the study of Protein-Ligand Interactions, primarily due to their ability to leverage large datasets and capture complex relationships in biological data.
@@ -22,7 +22,7 @@ It is for these reasons that I have developed a self-supervised transformer-base
 
 ![My image](./images/pre-trained.png)
 
-### b. Transformers for Protein-Ligand Interactions
+### Transformers for Protein-Ligand Interactions
 Transformers, traditionally used in NLP, excel at learning context. For protein-ligand interactions, transformers can be trained using masked token prediction to learn relationships between atoms in the ligand and residues in the binding site. This approach is useful because:
 
 - **Self-supervised learning** doesn't require explicit labels, making it ideal for large, unlabeled datasets.
