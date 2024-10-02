@@ -48,157 +48,330 @@ This method is highly effective for capturing the intricate details of how ligan
 
 ## 2. Implementation and Mathametical Foundation of BindAxTransformer
 
-### Protein-Ligand Complex Tokenization
+### **Step 1: Extraction of Protein and Ligand Properties**
 
-This repository explains the process of tokenizing protein-ligand complexes, combining ligand and protein binding site atom information, padding for uniform token size, and converting them into embeddings using a BERT-based tokenizer. This method is applied in self-supervised learning models for understanding protein-ligand interactions.
+In this step, we parse Protein Data Bank (PDB) files to extract detailed information about the protein and ligand atoms in a protein-ligand complex. Specifically, we aim to obtain:
 
-### **Step 1: Tokenization of Protein-Ligand Complexes**
+- **Atom Type**: The type of each atom (e.g., carbon, nitrogen).
 
-### **1.1 Extraction of Atoms and Coordinates**
+- **Element**: The chemical element symbol (e.g., C for carbon).
 
-For each protein-ligand complex, we extract the following information:
-- **Ligand**: A list of atoms and their corresponding 3D coordinates $$\(x, y, z)\$$.
-- **Protein Binding Site**: A list of residues, each containing multiple atoms and their 3D coordinates $$\(x, y, z)\$$.
+- **Coordinates**: The 3D spatial coordinates (x, y, z) of each atom.
 
-#### **Notation:**
-- Ligand atoms: $$\( L_i \)$$ represents the $$\(ith\)$$ atom of the ligand.
-- Protein binding site atoms: $$\( P_j^r \)$$, where $$\(P_j\)$$ represents the $$\(j\)-th$$ atom in residue $$\(r\)$$.
+- **Residue Information** (for proteins): The amino acid residue type and number.
 
-#### **Example Complexes:**
-
-- **Complex 1:**
-  - Ligand: $$\( [L_1, L_2, L_3, L_4] \)$$
-  - Binding Site: $$\( [P_1^1, P_2^1, P_1^2, \ldots, P_3^6] \)$$
   
-- **Complex 2:**
-  - Ligand: $$\( [L_1, L_2, L_3] \)$$
-  - Binding Site: $$\( [P_1^1, P_1^2, \ldots, P_2^5] \)$$
-  
-- **Complex 3:**
-  - Ligand: $$\( [L_1, L_2, L_3, L_4, L_5] \)$$
-  - Binding Site: $$\( [P_1^1, P_2^1, \ldots, P_4^7] \)$$
+1. **Parsing and Tokenizing Atoms**
 
-#### **Extracted Tuple Format:**
-For each atom, we extract a tuple: $$\( (atom\_type, x, y, z) \)$$.
+```python
+def tokenize_atom(line, molecule_type):
+# Extract atom details from a line in the PDB file
+ ```
 
-### **1.2 Combination of Tokens**
+* **Input**: A line from the PDB file and a molecule type identifier (0 for ligand, 1 for protein).
 
-For each complex, the extracted atoms are combined into a sequence of tokens consisting of ligand atoms and binding site atoms. The token list for each complex can be represented as:
+* **Process**: Extracts atom properties using string slicing based on PDB format specifications.
 
-$$\
-T = [L_1, L_2, \dots, L_m, P_1, P_2, \dots, P_n]
-\$$
+* **Output**: A dictionary containing the extracted properties.
 
-Where:
-- $$\( L_1, \dots, L_m \)$$ are ligand atoms,
-- $$\( P_1, \dots, P_n \)$$ are protein atoms from binding site residues.
+2. **Parsing the PDB File**
 
-Each token $$\( T_i \)$$ is represented as $$\( T_i = (atom\_type_i, x_i, y_i, z_i) \)$$.
-
-### **1.3 Padding for Uniform Token Size**
-
-Since the number of atoms varies across complexes, we pad the token lists to a fixed length, $$\( N_{\text{max}} \)$$, which is the maximum number of tokens in any complex.
-
-For each complex:
-- **Complex 1**: $$\( |T_1| = 10 \)$$, pad with $$\( N_{\text{max}} - 10 \)$$.
-- **Complex 2**: $$\( |T_2| = 8 \)$$, pad with $$\( N_{\text{max}} - 8 \)$$.
-- **Complex 3**: $$\( |T_3| = 12 \$$), no padding needed.
-
-### **1.4 Token to Embedding Conversion**
-
-Next, the tokens are converted into embeddings using the BERT tokenizer. Each token $$\( T_i \)$$ is mapped to a vector in the embedding space. Let the embedding dimension be $$\( d \)$$, typically 768 for BERT.
-
-Each complex $$\( C_k \)$$ is represented as a matrix of embeddings $$\( E_k \)$$:
-
-$$E_k = [e_T1  e_T2  e_T3 .... e_TNmax]\$$ 
-
-Where $$\( \mathbf{e}_{T_i} \)$$ is the embedding of token $$\( T_i \)$$.
-
-#### **Example Embedding Dimensions:**
-- **Complex 1**: $$\( E_1 \in \mathbb{R}^{N_{\text{max}} \times 768} \)$$
-- **Complex 2**: $$\( E_2 \in \mathbb{R}^{N_{\text{max}} \times 768} \)$$
-- **Complex 3**: $$\( E_3 \in \mathbb{R}^{N_{\text{max}} \times 768} \)$$
-
-
-### 1.5 Single Token Embedding for Ligand Atom
-
-Given a token $$\( T_i \)$$ that represents a single ligand atom, the embedding process maps the token to a high-dimensional vector. The features of this token typically include:
-1. **Atom Type**: Symbol of the atom (e.g., "C" for Carbon, "O" for Oxygen).
-2. **3D Coordinates**: $$\( (x_i, y_i, z_i) \)$$ representing the spatial location of the atom.
-3. **Charge**: The atom’s charge or other atomic properties.
-4. **Positional Encoding**: The atom’s position in the sequence of tokens.
-
-For a ligand atom with atom type "C" (carbon), 3D coordinates $$\( (1.24, -2.55, 0.67) \)$$, and charge 0, its embedding vector is composed of these different components:
-
-```math
-\mathbf{e}_{T_i} = \mathbf{v}_\text{atom\_type} + \mathbf{v}_\text{coordinates} + \mathbf{v}_\text{charge} + \mathbf{v}_\text{positional\_encoding}
+```python
+def parse_and_tokenize_pdb(pdb_file):
+# Read the PDB file and tokenize all atoms
 ```
 
-Let’s break this down:
+* **Process**: Reads all lines in the PDB file and separates ligand and protein atoms based on record types (`HETATM` for ligands, `ATOM` for proteins).
 
-1. **Atom Type Embedding** ($${v}_{atomtype}$$) :  
-   This encodes the type of atom. For a carbon atom, this embedding might be:
-   
-$${v}_{atomtype} = [0.1, 0.2, 0.05, ..., 0.3] \in \mathbb{R}^{d}$$
+* **Output**: A combined list of tokenized ligand and protein atoms.
 
-2. **3D Coordinates Embedding** $$\( \mathbf{v}_\text{coordinates} \)$$:  
-   The coordinates $$\( (1.24, -2.55, 0.67) \)$$ are encoded into a vector:
-   
- 
- $${v}_{text-coordinates} = {MLP}([1.24, -2.55, 0.67]) = [0.05, 0.12, 0.03, ..., 0.08] \in \mathbb{R}^{d}$$
-   
+3. **Calculating Interatomic Distances**
 
-3. **Charge Embedding** $$\( \mathbf{v}_\text{charge} \)$$:  
-   The charge of the atom (here 0) is also embedded:
+```python 
+def calculate_distance(coord1, coord2):
+# Compute Euclidean distance between two atoms
+```
+* **Input**: Coordinates of two atoms.
 
+* **Process**: Calculates the Euclidean distance using the formula:
+
+$$\text{Distance} = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}$$
   
-   $${v}_{text-charge} = [0.0, 0.0, 0.0, ...., 0.0] \in \mathbb{R}^{d}$$
-   
+* **Output**: The scalar distance between the two atoms.
 
-5. **Positional Encoding** ($${v}_{text-positional-encoding}$$):  
-   The positional encoding captures the position of this atom in the sequence. For the $$\( i \)-th$$ atom, the positional encoding might be:
-   
-   
-   $${v}_{text-positional-encoding} = [0.15, 0.03, 0.07, ...., 0.01] \in \mathbb{R}^{d}$$
-   
+4. **Finding Interactions**
 
-### Final Embedding for Single Token $$\( T_i \)$$
+```python
+def find_interactions(ligand_tokens, protein_tokens, distance_threshold=5.0):
+# Identify atom pairs within a specified distance
+```
 
-Summing all these components, we get the final embedding vector for token $$\( T_i \)$$:
+* **Process**: For each ligand atom, computes distances to all protein atoms and identifies pairs within the distance threshold (e.g., 5.0 Ångströms).
 
-$$
-\mathbf{e}_{T_i} = [0.1, 0.2, 0.05, \dots, 0.3] + [0.05, 0.12, 0.03, \dots, 0.08] + [0.0, 0.0, 0.0, \dots, 0.0] + [0.15, 0.03, 0.07, \dots, 0.01]
-$$
-
-This results in a high-dimensional vector $$\( \mathbf{e}_{T_i} \in \mathbb{R}^{768} \)$$, which contains information about the atom's type, its spatial location, charge, and its position in the sequence. This vector is then part of the larger matrix representing the entire complex.
-
-### Single Token Embedding Representation
-
-For a single ligand token $$\( T_i \)$$ (a carbon atom), the embedding looks like this:
-
-$$
-\mathbf{e}_{T_i} = \text{BERTTokenizer}(T_i) \in \mathbb{R}^{768}
-$$
-
-This embedding will be one of the rows in the final matrix $$\( E_k \)$$, where $$\( k \)$$ represents the index of the complex. Each row corresponds to one token (atom) from either the ligand or the protein binding site.
+* **Output**: A list of interacting atom pairs along with their distances.
 
 
+#### **PDB Format Parsing**
 
+- **Atom Line Format**: Each line in a PDB file representing an atom follows a specific format. For example:
 
+```python
+ATOM      1  N   MET A   1      38.428  13.104   6.364  1.00 54.69           N
+```
+- **Columns**:
+  - **Atom Serial Number (7-11)**: Unique identifier for the atom.
+  - **Atom Name (13-16)**: The name of the atom.
+  - **Residue Name (18-20)**: The name of the amino acid residue.
+  - **Chain Identifier (22)**: Protein chain identifier.
+  - **Residue Sequence Number (23-26)**: The sequence number of the residue.
+  - **Coordinates (31-54)**: x, y, z coordinates of the atom.
+  - **Element Symbol (77-78)**: The chemical element symbol.
 
-### d. Transformer Model
-The transformer is built using the **Hugging Face BERT architecture**:
-- **`ProteinLigandTransformer`** defines a model based on BERT with customized configuration (12 hidden layers, 12 attention heads). The input to the model is the combined ligand and protein tokens.
-- The model predicts the masked tokens by reconstructing atom and residue types based on context.
+- **Extraction**: Using string slicing, we extract these fields for each atom.
 
-### e. Training Loop
-The training loop implements the masked language model training:
-- **Masking Strategy**: 15% of the input tokens (atoms and residues) are randomly masked.
-- **Training**: The model learns to predict these masked tokens, minimizing the cross-entropy loss between the predicted and actual tokens.
+#### **Euclidean Distance Calculation**
 
-### f. Saving the Model
-After training, the model’s parameters are saved to a file for future use in predicting novel protein-ligand interactions.
+Given two atoms with coordinates $$\((x_1, y_1, z_1)\)$$ and $$\((x_2, y_2, z_2)\)$$, the Euclidean distance is calculated as:
 
+$$\text{Distance} = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}$$
+
+This calculation identifies atoms that are spatially close and potentially interacting.
+
+### **Example**
+
+Let's consider a simplified example with one ligand atom and one protein atom.
+
+- **Ligand Atom**:
+   - **Atom Type**: C1
+   - **Element**: C
+   - **Coordinates**: (10.0, 10.0, 10.0)
+
+- **Protein Atom**:
+   - **Atom Type**: N
+   - **Element**: N
+   - **Coordinates**: (12.0, 10.0, 10.0)
+   - **Residue Type**: MET
+   - **Residue Number**: 1
+
+#### **Distance Calculation**
+
+$$\text{Distance} = \sqrt{(12.0 - 10.0)^2 + (10.0 - 10.0)^2 + (10.0 - 10.0)^2} = \sqrt{(2.0)^2} = 2.0  \text{Å}$$
+
+Since the distance (2.0 Å) is less than the threshold (5.0 Å), we consider these atoms to be interacting.
+
+---
+
+## **Step 2: Tokenization of the Extracted Properties**
+
+### **Overview**
+
+In this step, we convert the extracted atom properties into numerical representations (tokens) suitable for input into a BERT model. Tokenization involves mapping discrete categorical variables to integer IDs and preparing continuous variables for model ingestion.
+
+### **Code Breakdown**
+
+1\. **Defining the Dataset Class**
+
+   ```python
+
+   class ProteinLigandDataset(Dataset):
+
+       # Custom dataset for handling protein-ligand interactions
+
+   ```
+
+   - **Attributes**:
+
+     - `self.tokens`: A list of interaction tokens extracted previously.
+
+     - `self.token2id`: A mapping from token strings to unique integer IDs.
+
+2\. **Implementing `__getitem__`**
+
+   ```python
+
+   def __getitem__(self, idx):
+
+       # Retrieves and processes a single data point
+
+   ```
+
+   - **Process**:
+
+     - **Input IDs**: Converts categorical variables (e.g., atom types, elements) to integer IDs using `self.token2id`.
+
+     - **Coordinates**: Combines ligand and protein atom coordinates into a single tensor.
+
+     - **Distance**: The scalar distance between the interacting atoms.
+
+     - **Attention Mask**: A binary mask indicating the presence of tokens (used in BERT models).
+
+3\. **Collate Function for DataLoader**
+
+   ```python
+
+   def collate_fn(batch):
+
+       # Aggregates multiple data points into a batch
+
+   ```
+
+   - **Process**:
+
+     - Pads sequences to ensure uniform length across the batch.
+
+     - Stacks coordinates and distances into tensors.
+
+### **Mathematical Details**
+
+#### **Tokenization**
+
+- **Categorical Variables**: Atom types, elements, and residue types are categorical and require encoding.
+
+  - **Token Mapping**:
+
+    - Create a vocabulary (`token2id`) that assigns a unique integer ID to each unique token in the dataset.
+
+    - For example:
+
+      | Token                       | ID  |
+
+      |-----------------------------|-----|
+
+      | `ligand_atom_C1`            | 1   |
+
+      | `ligand_element_C`          | 2   |
+
+      | `protein_atom_N`            | 3   |
+
+      | `protein_element_N`         | 4   |
+
+      | `protein_residue_MET`       | 5   |
+
+- **Input IDs**: Each data point's categorical variables are converted to a sequence of IDs.
+
+  \[
+
+  \text{Input IDs} = [ \text{ID}_{\text{ligand_atom}}, \text{ID}_{\text{ligand_element}}, \text{ID}_{\text{protein_atom}}, \text{ID}_{\text{protein_element}}, \text{ID}_{\text{protein_residue}} ]
+
+  \]
+
+#### **Continuous Variables**
+
+- **Coordinates**: These are continuous variables representing spatial positions.
+
+  - **Normalization**: Coordinates may be normalized to improve model training, typically by centering and scaling:
+
+    \[
+
+    \text{Normalized } x_i = \frac{x_i - \mu_x}{\sigma_x}
+
+    \]
+
+    where \(\mu_x\) and \(\sigma_x\) are the mean and standard deviation of the \(x\)-coordinates in the dataset.
+
+- **Distance**: Also a continuous variable, possibly normalized similarly.
+
+#### **Attention Mask**
+
+- Used in transformer models to indicate which tokens are valid (1) and which are padding (0).
+
+### **Example**
+
+Using the previous example, let's tokenize the interaction.
+
+- **Tokens**:
+
+  - `ligand_atom_C1`: ID 1
+
+  - `ligand_element_C`: ID 2
+
+  - `protein_atom_N`: ID 3
+
+  - `protein_element_N`: ID 4
+
+  - `protein_residue_MET`: ID 5
+
+- **Input IDs**:
+
+  \[
+
+  \text{Input IDs} = [1, 2, 3, 4, 5]
+
+  \]
+
+- **Coordinates**:
+
+  \[
+
+  \text{Coordinates} = [10.0, 10.0, 10.0, 12.0, 10.0, 10.0]
+
+  \]
+
+- **Distance**:
+
+  \[
+
+  \text{Distance} = [2.0]
+
+  \]
+
+- **Attention Mask**:
+
+  \[
+
+  \text{Attention Mask} = [1, 1, 1, 1, 1]
+
+  \]
+
+### **Preparing for BERT Model**
+
+The BERT model expects inputs in a specific format:
+
+- **Input IDs**: A sequence of token IDs.
+
+- **Attention Mask**: Indicates which tokens are actual data.
+
+- **Optional Position Embeddings**: Since we're dealing with spatial data, we might include positional information.
+
+#### **Incorporating Coordinates**
+
+- **Embedding Coordinates**:
+
+  - Coordinates can be embedded separately or concatenated with token embeddings.
+
+  - Alternatively, a custom embedding layer can process the coordinates.
+
+#### **Mathematical Representation in the Model**
+
+- **Embedding Layer**:
+
+  - Transforms input IDs into dense vector representations:
+
+    \[
+
+    \mathbf{E}_{\text{input}} = \text{EmbeddingMatrix} \times \text{Input IDs}
+
+    \]
+
+- **Model Input**:
+
+  - The model input might be a combination of token embeddings and coordinate embeddings.
+
+---
+
+## **Summary**
+
+By dividing the process into two steps, we've:
+
+1\. **Extracted Atom Properties**: Parsed PDB files to obtain detailed information about ligand and protein atoms, including calculating interatomic distances to identify interactions.
+
+2\. **Tokenized the Properties**: Converted categorical variables into token IDs and prepared continuous variables (coordinates and distances) for model input, ensuring they are in a suitable format for training a BERT model.
+
+Throughout both steps, we've applied mathematical concepts such as string parsing based on PDB formatting, Euclidean distance calculations for spatial relationships, and data normalization techniques to prepare continuous variables.
+
+---
+
+**Note**: When implementing the actual model, consider additional preprocessing steps such as handling rare tokens, normalizing continuous variables, and integrating spatial information in a way that leverages the strengths of transformer architectures.
 ## 3. Detailed Code Explanation for BindAxTransformer
 
 I have created a separate repository that explains the code behind **BindAxTransformer** line by line. You can find that repository [here](https://github.com/gautammalik-git/Understanding-BindAxTransformer.git).
