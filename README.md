@@ -48,7 +48,7 @@ This method is highly effective for capturing the intricate details of how ligan
 
 ## 2. Implementation and Mathametical Foundation of BindAxTransformer
 
-### **Step 1: Extraction of Protein and Ligand Properties**
+## **Step 1: Extraction of Protein and Ligand Properties**
 
 In this step, we parse Protein Data Bank (PDB) files to extract detailed information about the protein and ligand atoms in a protein-ligand complex. Specifically, we aim to obtain:
 
@@ -161,7 +161,7 @@ Since the distance (2.0 Å) is less than the threshold (5.0 Å), we consider the
 
 ---
 
-### **Step 2: Tokenization of the Extracted Properties**
+## **Step 2: Tokenization of the Extracted Properties**
 
 In this step, we convert the extracted atom properties into numerical representations (tokens) suitable for input into a BERT model. Tokenization involves mapping discrete categorical variables to integer IDs and preparing continuous variables for model ingestion.
 
@@ -305,8 +305,213 @@ The BERT model expects inputs in a specific format:
 
   - The model input might be a combination of token embeddings and coordinate embeddings.
 
+---
 
-**Note**: When implementing the actual model, consider additional preprocessing steps such as handling rare tokens, normalizing continuous variables, and integrating spatial information in a way that leverages the strengths of transformer architectures.
+## Step 3. BERT Model
+
+The `BertConfig` class is responsible for holding the hyperparameters for a BERT model. Here's a breakdown of the key parameters, their meanings, and the mathematical concepts involved.
+
+```python
+
+class BertConfig:
+
+    def __init__(self, vocab_size, hidden_size=768, num_attention_heads=12, num_hidden_layers=12,
+
+                 intermediate_size=3072, hidden_act="gelu", dropout_prob=0.1, attention_probs_dropout_prob=0.1):
+
+        self.vocab_size = vocab_size
+
+        self.hidden_size = hidden_size
+
+        self.num_attention_heads = num_attention_heads
+
+        self.num_hidden_layers = num_hidden_layers
+
+        self.intermediate_size = intermediate_size
+
+        self.hidden_act = hidden_act
+
+        self.dropout_prob = dropout_prob
+
+        self.attention_probs_dropout_prob = attention_probs_dropout_prob
+
+```
+
+### Key Parameters Explained
+
+1\. **`vocab_size`**:
+
+   - This parameter defines the number of unique tokens (words, subwords, or special tokens) in the model's vocabulary.
+
+   - **Mathematics**: The embedding matrix \(E\) is of shape \((\text{vocab_size}, \text{hidden_size})\). Each token corresponds to a row in this matrix, which transforms the token ID into a dense vector.
+
+```math
+\vec{E} = \begin{bmatrix} 
+e_1 \\ 
+e_2 \\ 
+\vdots \\ 
+e_{\text{vocab\_size}} 
+\end{bmatrix}
+```
+```math
+\quad \text{where } e_i \in \mathbb{R}^{\text{hidden\_size}}
+```
+2. **`hidden_size`**:
+
+* This parameter indicates the size of the hidden layers within the transformer architecture. It is critical as it dictates the dimensionality of the input and output embeddings at each layer.
+
+* **Mathematics**: The representation of input tokens (or embeddings) is of shape, (batch_size, sequence_length, hidden_size)
+
+
+3. **`num_attention_heads`**:
+
+* This parameter defines the number of attention heads in the multi-head self-attention mechanism.
+
+* **Mathematics**: Each attention head operates on a separate linear transformation of the input embeddings. The total number of attention heads is typically chosen such that `hidden_size` is divisible by  `num_attention_heads`.
+
+The attention head output can be represented as:
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+where,
+```math
+d_k = \frac{\text{hidden\_size}}{\text{num\_attention\_heads}} 
+```
+
+4\. **`num_hidden_layers`**:
+
+* This parameter specifies how many transformer blocks (layers) the model consists of.
+
+* **Mathematics**: The output of one layer serves as the input to the next layer. Therefore, the depth of the network significantly influences its capacity to learn complex representations.
+
+5\. **`intermediate_size`**:
+
+* This is the size of the "intermediate" (feedforward) layer, which is larger than the hidden size. It's used in the position-wise feedforward network within each transformer block.
+
+* **Mathematics**: The feedforward network (FFN) can be mathematically expressed as:
+
+```math
+\text{FFN}(x) = \text{max}(0, xW_1 + b_1)W_2 + b_2
+```
+where `W₁` has shape `(hidden_size, intermediate_size)` and `W₂` has shape `(intermediate_size, hidden_size)`
+
+6\. **`hidden_act`**:
+
+* The activation function used in the feedforward network, typically "gelu" (Gaussian Error Linear Unit) or "relu" (Rectified Linear Unit).
+
+* **Mathematics**: The GELU activation function is defined as:
+
+ $$\text{GELU}(x) = x \cdot \Phi(x) = 0.5x \left(1 + \text{tanh}\left(\sqrt{\frac{2}{\pi}} \left(x + 0.044715x^3\right)\right)\right)$$
+
+This nonlinear function allows the model to learn complex relationships in the data.
+
+7\. **`dropout_prob`**:
+
+* This parameter is used to prevent overfitting by randomly setting a fraction of the input units to zero during training.
+
+* **Mathematics**: If \(x\) is the input to a layer, applying dropout can be represented as:
+
+```math
+  
+
+   x' = \text{Dropout}(x, p) = 
+
+   \begin{cases} 
+
+   0 & \text{with probability } p \
+
+   \frac{x}{1-p} & \text{with probability } 1-p 
+
+   \end{cases}
+
+```
+   where \(p\) is the dropout probability.
+
+8\. **`attention_probs_dropout_prob`**:
+
+* Similar to `dropout_prob`, but specifically for the attention probabilities during the computation of the attention weights.
+
+* **Mathematics**: This is applied after the attention scores are calculated to ensure robustness against overfitting.
+
+### Example of BERT Forward Pass
+
+Let's walk through the computations involved in a forward pass through a single transformer block in BERT.
+
+1\. **Input Embedding**:
+
+* An input sequence of tokens is represented as an embedding matrix \(E\).
+
+* If our vocabulary size is 10000 and the hidden size is 768, then the embedding matrix \(E\) is:
+
+```math
+  
+
+   E \in \mathbb{R}^{10000 \times 768}
+
+   
+```
+
+2\. **Self-Attention Calculation**:
+
+* Given an input matrix \(X\) of shape \((\text{batch\_size}, \text{sequence\_length}, \text{hidden\_size})\), we compute \(Q\), \(K\), and \(V\) via linear transformations:
+
+```math
+   
+
+   Q = XW_Q, \quad K = XW_K, \quad V = XW_V
+
+   
+```
+   where \(W_Q\), \(W_K\), and \(W_V\) are weight matrices of shape \((\text{hidden\_size}, \text{hidden\_size})\).
+
+3\. **Attention Scores**:
+
+* Compute the scaled dot-product attention scores:
+
+```math
+  
+
+   \text{scores} = \frac{QK^T}{\sqrt{d_k}}
+
+  
+```
+
+4\. **Softmax**:
+
+* Apply the softmax function to obtain the attention weights:
+
+```math
+  
+
+   A = \text{softmax}(\text{scores})
+
+  
+```
+
+5\. **Output**:
+
+* Finally, compute the attention output:
+
+```math
+ 
+
+   \text{output} = AV
+
+  
+```
+
+6\. **Feedforward Network**:
+
+* The output from the attention mechanism is then passed through the feedforward network (FFN):
+
+```math
+
+
+   \text{FFN}(\text{output}) = \text{max}(0, \text{output}W_1 + b_1)W_2 + b_2
+
+   
+```
+
 ## 3. Detailed Code Explanation for BindAxTransformer
 
 I have created a separate repository that explains the code behind **BindAxTransformer** line by line. You can find that repository [here](https://github.com/gautammalik-git/Understanding-BindAxTransformer.git).
