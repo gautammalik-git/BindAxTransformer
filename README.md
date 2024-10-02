@@ -309,33 +309,35 @@ The BERT model expects inputs in a specific format:
 
 ## Step 3. BERT Model
 
+### 1. **Model Definition and Initialization**
+
 The `BertConfig` class is responsible for holding the hyperparameters for a BERT model. Here's a breakdown of the key parameters, their meanings, and the mathematical concepts involved.
+
 
 ```python
 
-class BertConfig:
+class ProteinLigandTransformer(nn.Module):
 
-    def __init__(self, vocab_size, hidden_size=768, num_attention_heads=12, num_hidden_layers=12,
+    def __init__(self, vocab_size, hidden_size=1152, num_attention_heads=12, num_hidden_layers=12):
 
-                 intermediate_size=3072, hidden_act="gelu", dropout_prob=0.1, attention_probs_dropout_prob=0.1):
+        super(ProteinLigandTransformer, self).__init__()
 
-        self.vocab_size = vocab_size
+        config = BertConfig(
 
-        self.hidden_size = hidden_size
+            vocab_size=vocab_size,
 
-        self.num_attention_heads = num_attention_heads
+            hidden_size=hidden_size,
 
-        self.num_hidden_layers = num_hidden_layers
+            num_attention_heads=num_attention_heads,
 
-        self.intermediate_size = intermediate_size
+            num_hidden_layers=num_hidden_layers
 
-        self.hidden_act = hidden_act
+        )
 
-        self.dropout_prob = dropout_prob
-
-        self.attention_probs_dropout_prob = attention_probs_dropout_prob
+        self.bert = BertModel(config)
 
 ```
+
 
 ### Key Parameters Explained
 
@@ -511,6 +513,276 @@ Let's walk through the computations involved in a forward pass through a single 
 
    
 ```
+
+### 2. **Coordinate and Distance Encoders**
+
+```python
+
+self.coordinate_encoder = nn.Linear(6, hidden_size)  # 6 for x,y,z of both ligand and protein
+
+self.distance_encoder = nn.Linear(1, hidden_size)
+
+self.cls = nn.Linear(hidden_size, vocab_size)
+
+```
+
+
+* **Coordinate Encoder**: 
+   * This linear layer takes a 6-dimensional input (x, y, z coordinates of the ligand and protein) and projects it to the hidden size. The operation can be mathematically represented as:
+
+   $$\text{output} = W \cdot \text{input} + b$$
+
+where `W` is the weight matrix of shape `(hidden_size, 6)` and `b` is the bias vector.
+
+
+* **Distance Encoder**: 
+   * This linear layer maps a 1-dimensional distance value to the hidden size.
+
+* **Classification Layer (`cls`)**: 
+   * This layer projects the hidden states back to the vocabulary size for token classification.
+
+### 3. **Forward Method**
+
+```python
+
+def forward(self, input_ids=None, coordinates=None, distances=None, attention_mask=None):
+
+    token_embeddings = self.bert.embeddings(input_ids) if input_ids is not None else None
+
+```
+
+#### Explanation:
+
+* **Token Embeddings**: 
+   * The input token IDs are passed through BERT's embedding layer to obtain embeddings. Each token ID is associated with a corresponding vector in the embedding matrix of shape `(vocab_size, hidden_size)`
+.
+
+### 4. **Encoding Coordinates and Distances**
+
+```python
+
+coordinate_embeddings = self.coordinate_encoder(coordinates).unsqueeze(1)
+
+distance_embeddings = self.distance_encoder(distances).unsqueeze(1)
+
+```
+
+#### Explanation:
+
+* **Encoding**: 
+   * The coordinates and distances are encoded using their respective linear layers, resulting in matrices of shape \((\text{batch_size}, 1, \text{hidden_size})\).
+
+### 5. **Combining Embeddings**
+
+```python
+
+if token_embeddings is not None:
+
+    embeddings = token_embeddings + coordinate_embeddings + distance_embeddings
+
+else:
+
+    embeddings = coordinate_embeddings + distance_embeddings
+
+```
+
+#### Explanation:
+
+* **Element-wise Addition**: 
+   * The embeddings are combined. If `token_embeddings` is not None, the embeddings from tokens, coordinates, and distances are summed. This step effectively fuses the different types of information (semantic and spatial).
+
+### 6. **Passing Through BERT**
+
+```python
+
+outputs = self.bert(inputs_embeds=embeddings, attention_mask=attention_mask)
+
+sequence_output = outputs[0]  # Output from the last hidden layer
+
+```
+
+#### Explanation:
+
+* **BERT Forward Pass**:
+
+  * The combined embeddings are passed through the BERT model. BERT applies a series of transformations including self-attention and feedforward networks.
+
+  * The self-attention mechanism can be mathematically represented as:
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+where:
+
+- `Q` (Query), `K` (Key), and `V` (Value) are derived from the input embeddings.
+
+-  $$\(d_k\)$$ is the dimension of the keys (number of features in the keys).
+
+- The output is a weighted sum of the values, where the weights are determined by the similarity between queries and keys.
+
+
+### 7. **Classification Layer**
+
+```python
+
+logits = self.cls(sequence_output)
+
+```
+
+#### Explanation:
+
+* **Classification**: 
+   * The output from the last hidden layer of BERT is fed into the classification layer to produce logits for each token.
+
+### 8. **Main Function**
+
+```python
+
+def main():
+
+    directory = 'mysite'
+
+    all_tokens = process_pdb_files(directory)
+
+```
+
+#### Explanation:
+
+* **Data Processing**: 
+   * The data from PDB files is processed to extract tokens, which will then be used for training the model.
+
+### 9. **Creating Vocabulary and Splitting Data**
+
+```python
+
+vocab = set()
+
+for token in all_tokens:
+
+    vocab.add(f"ligand_atom_{token['ligand_atom']}")
+
+    vocab.add(f"ligand_element_{token['ligand_element']}")
+
+    vocab.add(f"protein_atom_{token['protein_atom']}")
+
+    vocab.add(f"protein_element_{token['protein_element']}")
+
+    vocab.add(f"protein_residue_{token['protein_residue']}")
+
+```
+
+#### Explanation:
+
+* **Vocabulary Creation**: 
+   * A unique set of tokens is created from the processed data. Each token represents a specific feature of the ligand or protein, allowing the model to learn from diverse inputs.
+
+### 10. **Training Loop**
+
+```python
+
+for epoch in range(num_epochs):
+
+    model.train()
+
+    train_loss = 0
+
+    for batch in train_dataloader:
+
+        input_ids = batch['input_ids'].to(device)
+
+        coordinates = batch['coordinates'].to(device)
+
+        distances = batch['distances'].to(device)
+
+        attention_mask = batch['attention_mask'].to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(input_ids=input_ids, coordinates=coordinates, distances=distances, attention_mask=attention_mask)
+
+        labels = input_ids.clone()
+
+        mask = torch.bernoulli(torch.full(input_ids.shape, 0.15)).bool()
+
+        labels[~mask] = -100  # Only compute loss on masked tokens
+
+        loss = criterion(outputs.view(-1, len(token2id)), labels.view(-1))
+
+        loss.backward()
+
+        optimizer.step()
+
+        train_loss += loss.item()
+
+```
+
+#### Explanation:
+
+* **Training**:
+   * The model is trained over several epochs. For each batch:
+   * The optimizer updates the model weights based on the computed loss.
+   * The loss is calculated using the Cross Entropy Loss function, which is common for multi-class classification tasks.
+
+### Summary of Mathematical Concepts
+
+* **Linear Layers**: Implement matrix multiplication and bias addition.
+
+* **Attention Mechanism**: Computes relationships between input tokens.
+
+* **Cross-Entropy Loss**: Measures the difference between predicted probabilities and actual labels, guiding the optimization of the model.
+
+### Example Matrix Operations
+
+Let's illustrate how matrices are involved in a simple linear transformation:
+
+Assuming we have a coordinate input \(C\):
+
+```math
+
+C = \begin{bmatrix}
+
+x_1 \
+
+y_1 \
+
+z_1 \
+
+x_2 \
+
+y_2 \
+
+z_2
+
+\end{bmatrix}
+```
+
+After passing through the coordinate encoder with weight matrix \(W\):
+
+```math
+
+W = \begin{bmatrix}
+
+w_{11} & w_{12} & w_{13} & w_{14} & w_{15} & w_{16} \
+
+... & ... & ... & ... & ... & ... \
+
+w_{n1} & w_{n2} & w_{n3} & w_{n4} & w_{n5} & w_{n6}
+
+\end{bmatrix}
+
+```
+
+The output will be:
+
+```math
+
+E = W \cdot C + b
+
+```
+
+Where \(E\) is the encoded representation in hidden space. Each dimension of \(E\) will correspond to a feature in the transformer model.
+
+
+---
 
 ## 3. Detailed Code Explanation for BindAxTransformer
 
