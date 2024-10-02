@@ -161,117 +161,82 @@ Since the distance (2.0 Å) is less than the threshold (5.0 Å), we consider the
 
 ---
 
-## **Step 2: Tokenization of the Extracted Properties**
-
-### **Overview**
+### **Step 2: Tokenization of the Extracted Properties**
 
 In this step, we convert the extracted atom properties into numerical representations (tokens) suitable for input into a BERT model. Tokenization involves mapping discrete categorical variables to integer IDs and preparing continuous variables for model ingestion.
 
-### **Code Breakdown**
+1. **Defining the Dataset Class**
 
-1\. **Defining the Dataset Class**
+```python
 
-   ```python
+class ProteinLigandDataset(Dataset):
+#Custom dataset for handling protein-ligand interactions
+```
+- **Attributes**:
+   - `self.tokens`: A list of interaction tokens extracted previously.
+   - `self.token2id`: A mapping from token strings to unique integer IDs.
 
-   class ProteinLigandDataset(Dataset):
+2. **Implementing `__getitem__`**
 
-       # Custom dataset for handling protein-ligand interactions
+```python
+def __getitem__(self, idx):
+# Retrieves and processes a single data point
+```
 
-   ```
+- **Process**:
+   - **Input IDs**: Converts categorical variables (e.g., atom types, elements) to integer IDs using `self.token2id`.
+   - **Coordinates**: Combines ligand and protein atom coordinates into a single tensor.
+   - **Distance**: The scalar distance between the interacting atoms.
+   - **Attention Mask**: A binary mask indicating the presence of tokens (used in BERT models).
 
-   - **Attributes**:
+3. **Collate Function for DataLoader**
 
-     - `self.tokens`: A list of interaction tokens extracted previously.
+```python
+def collate_fn(batch):
+# Aggregates multiple data points into a batch
+```
 
-     - `self.token2id`: A mapping from token strings to unique integer IDs.
+- **Process**:
+   - Pads sequences to ensure uniform length across the batch.
+   - Stacks coordinates and distances into tensors.
 
-2\. **Implementing `__getitem__`**
 
-   ```python
 
-   def __getitem__(self, idx):
+4. **Tokenization**
 
-       # Retrieves and processes a single data point
+* **Categorical Variables**: Atom types, elements, and residue types are categorical and require encoding.
 
-   ```
+   * **Token Mapping**:
+      * Create a vocabulary (`token2id`) that assigns a unique integer ID to each unique token in the dataset.
+* For example:
 
-   - **Process**:
+| Token                     | ID |
+|---------------------------|----|
+| `ligand_atom_C1`         | 1  |
+| `ligand_element_C`       | 2  |
+| `protein_atom_N`         | 3  |
+| `protein_element_N`      | 4  |
+| `protein_residue_MET`    | 5  |
 
-     - **Input IDs**: Converts categorical variables (e.g., atom types, elements) to integer IDs using `self.token2id`.
 
-     - **Coordinates**: Combines ligand and protein atom coordinates into a single tensor.
+**Input IDs**: Each data point's categorical variables are converted to a sequence of IDs.
 
-     - **Distance**: The scalar distance between the interacting atoms.
+**Input IDs** = ID<sub>ligand_atom</sub>, ID<sub>ligand_element</sub>, ID<sub>protein_atom</sub>, ID<sub>protein_element</sub>, ID<sub>protein_residue</sub>
 
-     - **Attention Mask**: A binary mask indicating the presence of tokens (used in BERT models).
 
-3\. **Collate Function for DataLoader**
+* **Continuous Variables**
+   * **Coordinates**: These are continuous variables representing spatial positions.
+   * **Normalization**: Coordinates may be normalized to improve model training, typically by centering and scaling:
 
-   ```python
+$$
+\text{Normalized } x_i = \frac{x_i - \mu_x}{\sigma_x}
+$$
 
-   def collate_fn(batch):
-
-       # Aggregates multiple data points into a batch
-
-   ```
-
-   - **Process**:
-
-     - Pads sequences to ensure uniform length across the batch.
-
-     - Stacks coordinates and distances into tensors.
-
-### **Mathematical Details**
-
-#### **Tokenization**
-
-- **Categorical Variables**: Atom types, elements, and residue types are categorical and require encoding.
-
-  - **Token Mapping**:
-
-    - Create a vocabulary (`token2id`) that assigns a unique integer ID to each unique token in the dataset.
-
-    - For example:
-
-      | Token                       | ID  |
-
-      |-----------------------------|-----|
-
-      | `ligand_atom_C1`            | 1   |
-
-      | `ligand_element_C`          | 2   |
-
-      | `protein_atom_N`            | 3   |
-
-      | `protein_element_N`         | 4   |
-
-      | `protein_residue_MET`       | 5   |
-
-- **Input IDs**: Each data point's categorical variables are converted to a sequence of IDs.
-
-  \[
-
-  \text{Input IDs} = [ \text{ID}_{\text{ligand_atom}}, \text{ID}_{\text{ligand_element}}, \text{ID}_{\text{protein_atom}}, \text{ID}_{\text{protein_element}}, \text{ID}_{\text{protein_residue}} ]
-
-  \]
-
-#### **Continuous Variables**
-
-- **Coordinates**: These are continuous variables representing spatial positions.
-
-  - **Normalization**: Coordinates may be normalized to improve model training, typically by centering and scaling:
-
-    \[
-
-    \text{Normalized } x_i = \frac{x_i - \mu_x}{\sigma_x}
-
-    \]
-
-    where \(\mu_x\) and \(\sigma_x\) are the mean and standard deviation of the \(x\)-coordinates in the dataset.
+where $$\(\mu_x\)$$ and $$\(\sigma_x\)$$ are the mean and standard deviation of the $$\(x\)$$-coordinates in the dataset.
 
 - **Distance**: Also a continuous variable, possibly normalized similarly.
 
-#### **Attention Mask**
+5. **Attention Mask**
 
 - Used in transformer models to indicate which tokens are valid (1) and which are padding (0).
 
@@ -293,35 +258,21 @@ Using the previous example, let's tokenize the interaction.
 
 - **Input IDs**:
 
-  \[
-
-  \text{Input IDs} = [1, 2, 3, 4, 5]
-
-  \]
+$$\text{Input IDs} = [1, 2, 3, 4, 5]$$
 
 - **Coordinates**:
 
-  \[
+$$\text{Coordinates} = [10.0, 10.0, 10.0, 12.0, 10.0, 10.0]$$
 
-  \text{Coordinates} = [10.0, 10.0, 10.0, 12.0, 10.0, 10.0]
-
-  \]
 
 - **Distance**:
 
-  \[
-
-  \text{Distance} = [2.0]
-
-  \]
+$$\text{Distance} = [2.0]$$
 
 - **Attention Mask**:
 
-  \[
+$$\text{Attention Mask} = [1, 1, 1, 1, 1]$$
 
-  \text{Attention Mask} = [1, 1, 1, 1, 1]
-
-  \]
 
 ### **Preparing for BERT Model**
 
@@ -347,29 +298,13 @@ The BERT model expects inputs in a specific format:
 
   - Transforms input IDs into dense vector representations:
 
-    \[
+  $$\mathbf{E}_{\text{input}} = \text{EmbeddingMatrix} \times \text{Input IDs}$$
 
-    \mathbf{E}_{\text{input}} = \text{EmbeddingMatrix} \times \text{Input IDs}
-
-    \]
 
 - **Model Input**:
 
   - The model input might be a combination of token embeddings and coordinate embeddings.
 
----
-
-## **Summary**
-
-By dividing the process into two steps, we've:
-
-1\. **Extracted Atom Properties**: Parsed PDB files to obtain detailed information about ligand and protein atoms, including calculating interatomic distances to identify interactions.
-
-2\. **Tokenized the Properties**: Converted categorical variables into token IDs and prepared continuous variables (coordinates and distances) for model input, ensuring they are in a suitable format for training a BERT model.
-
-Throughout both steps, we've applied mathematical concepts such as string parsing based on PDB formatting, Euclidean distance calculations for spatial relationships, and data normalization techniques to prepare continuous variables.
-
----
 
 **Note**: When implementing the actual model, consider additional preprocessing steps such as handling rare tokens, normalizing continuous variables, and integrating spatial information in a way that leverages the strengths of transformer architectures.
 ## 3. Detailed Code Explanation for BindAxTransformer
