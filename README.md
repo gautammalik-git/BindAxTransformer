@@ -403,8 +403,9 @@ where `W₁` has shape `(hidden_size, intermediate_size)` and `W₂` has shape `
 
 * **Mathematics**: The GELU activation function is defined as:
 
- $$\text{GELU}(x) = x \cdot \Phi(x) = 0.5x \left(1 + \text{tanh}\left(\sqrt{\frac{2}{\pi}} \left(x + 0.044715x^3\right)\right)\right)$$
-
+```math
+ \text{GELU}(x) = x \cdot \Phi(x) = 0.5x \left(1 + \text{tanh}\left(\sqrt{\frac{2}{\pi}} \left(x + 0.044715x^3\right)\right)\right)
+```
 This nonlinear function allows the model to learn complex relationships in the data.
 
 7\. **`dropout_prob`**:
