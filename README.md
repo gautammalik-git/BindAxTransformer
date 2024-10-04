@@ -6,13 +6,87 @@ This repository contains the implementation of a self-supervised Bidirectional E
 
 ### What are Transformers?
 
-Transformers have revolutionized machine learning, particularly in natural language processing (NLP), by enabling models to handle complex data relationships efficiently. Introduced in the paper *"Attention is All You Need"*, transformers rely on **self-attention mechanisms**, allowing them to capture long-range dependencies in data more effectively than previous architectures like recurrent neural networks (RNNs).
+Transformers are a type of deep learning model architecture designed for processing sequential data. They were introduced in the 2017 paper *"Attention Is All You Need"* by Vaswani et al. and have become the foundation for many state-of-the-art models in natural language processing (NLP), computer vision, and even protein-ligand modeling.
 
-At the core of transformers is the **self-attention** mechanism, which weighs the importance of each part of the input sequence relative to the others. This enables transformers to process input data in parallel rather than sequentially, resulting in faster and more scalable models. Due to their parallelism and ability to capture context across entire sequences, transformers have outperformed older models in tasks like translation, text generation, and understanding.
+### Key Concepts of Transformers:
 
-Transformers are not limited to NLP; they have been applied across various fields such as computer vision and bioinformatics. In fields like protein-ligand interaction modeling, transformers capture the complex spatial and chemical relationships between molecules, making them an invaluable tool for biological and chemical data.
+1\. **Self-Attention Mechanism**:
 
-Their flexibility and power make transformers one of the most influential architectures in modern machine learning.
+   Transformers rely on a mechanism called *self-attention*, which allows the model to weigh the importance of each word (or token) in a sequence with respect to every other word, regardless of their distance from each other. This is in contrast to models like RNNs, which process data sequentially and can struggle with long-range dependencies.
+
+2\. **Multi-Head Attention**:
+
+   Instead of computing a single attention score for each token, transformers use *multi-head attention*, which allows the model to learn attention from different "perspectives" (or heads). Each head can focus on different parts of the sequence, giving the model a richer understanding of the data.
+
+3\. **Positional Encoding**:
+
+   Unlike RNNs, transformers don't inherently have a sense of order in the input sequence because they process all tokens in parallel. To give the model a sense of position, *positional encodings* are added to the input embeddings, encoding the relative or absolute position of each token in the sequence.
+
+4\. **Feed-Forward Networks**:
+
+   After applying attention, each token representation is passed through a fully connected feed-forward network, which allows for complex transformations and feature extraction.
+
+5\. **Layer Normalization and Residual Connections**:
+
+   Transformers also make extensive use of *layer normalization* and *residual connections*, which help stabilize training and allow the model to capture better representations.
+
+6\. **Encoder-Decoder Architecture**:
+
+   - **Encoder**: In many transformer models, an encoder processes the input sequence. It consists of multiple layers of self-attention followed by feed-forward networks.
+
+   - **Decoder**: In the original transformer architecture for sequence-to-sequence tasks like machine translation, the decoder takes the output of the encoder and generates the target sequence, using both self-attention and cross-attention (which attends to the encoder's outputs).
+
+However, in models like BERT (Bidirectional Encoder Representations from Transformers), only the encoder is used, with slight modifications to make the model bidirectional.
+
+### Transformer Architecture (Simplified Diagram):
+
+```python
+
+Input Embeddings + Positional Encodings
+
+      ↓
+
+[Encoder Block 1]
+
+  ↓
+
+[Encoder Block 2]
+
+  ↓
+
+ ...
+
+[Encoder Block N]
+
+  ↓
+
+Output Embeddings
+
+```
+
+Each *encoder block* contains:
+
+- Self-Attention layer
+
+- Feed-forward network
+
+- Layer normalization + residual connection
+
+### Key Innovations:
+
+- **Parallelization**: Since transformers don't rely on sequential data processing like RNNs, they can be fully parallelized, speeding up training on large datasets.
+
+- **Long-Range Dependencies**: The self-attention mechanism makes it easier for transformers to capture long-range dependencies compared to older models.
+
+### Applications:
+
+- **NLP**: Transformers power models like BERT, GPT, and T5, which are used in tasks such as text generation, classification, translation, summarization, and more.
+
+- **Vision**: Vision Transformers (ViTs) are used to process image data by treating image patches as tokens, allowing the transformer architecture to perform well on image classification tasks.
+
+- **Proteins and Chemistry**: Transformers are being used to model protein-ligand interactions, predict binding sites, and other structural tasks due to their ability to handle large, complex sequences.
+
+Transformers have revolutionized multiple fields, making them one of the most important architectures in deep learning today.
 
 ![My image](./images/transformer.png)
 
